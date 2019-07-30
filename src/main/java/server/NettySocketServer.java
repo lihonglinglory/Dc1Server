@@ -25,15 +25,20 @@ public class NettySocketServer {
         try {
             bootstrap
                     .option(ChannelOption.SO_BACKLOG, 1024)
+                    .childOption(ChannelOption.SO_KEEPALIVE,true)
                     // BACKLOG用于构造服务端套接字ServerSocket对象，标识当服务器请求处理线程全满时，
                     // 用于临时存放已完成三次握手的请求的队列的最大长度。如果未设置或所设置的值小于1，Java将使用默认值50。
                     .group(bossGroup, workerGroup) //绑定线程池
                     .channel(NioServerSocketChannel.class)// 指定使用的channel
-                    .localAddress(port)
                     .childHandler(new SocketChannelChannelInitializer());
-            ChannelFuture channelFuture = bootstrap.bind().sync(); //服务器异步创建绑定
-            System.out.println("Server is listening：" + channelFuture.channel());
-            channelFuture.channel().closeFuture().sync();//关闭服务器
+            ChannelFuture channelFutureDc1 = bootstrap.bind(port);
+            ChannelFuture channelFuturePhone = bootstrap.bind(8800);
+            channelFutureDc1.sync();//服务器异步创建绑定
+            channelFuturePhone.sync();
+            System.out.println("Server is listening：" + channelFutureDc1.channel());
+            System.out.println("Server is listening：" + channelFuturePhone.channel());
+            channelFutureDc1.channel().closeFuture().sync();//关闭服务器
+            channelFuturePhone.channel().closeFuture().sync();//关闭服务器
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

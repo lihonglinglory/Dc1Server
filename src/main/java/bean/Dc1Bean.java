@@ -2,6 +2,9 @@ package bean;
 
 public class Dc1Bean {
     public String mac;
+    /**
+     * 实际状态
+     */
     public String status;
     public int I;
     public int V;

@@ -1,27 +1,29 @@
 package bean;
 
+import com.sun.istack.internal.NotNull;
+
 /**
  * 状态查询
  */
 public class StatusBean {
     /**
-     * status : 1011
-     * I : 119
-     * V : 219
-     * P : 10
+     * "status" : 1011
+     * "I" : 119
+     * "V" : 219
+     * "P" : 10
      */
 
-    private String status;
+    private int status;
     private int I;
     private int V;
     private int P;
 
     public String getStatus() {
-        return status;
+        return parseToPhoneStatus(status);
     }
 
     public void setStatus(String status) {
-        this.status = status;
+        this.status = parseToDc1Status(status);
     }
 
     public int getI() {
@@ -46,5 +48,47 @@ public class StatusBean {
 
     public void setP(int P) {
         this.P = P;
+    }
+
+    /**
+     * 转换成dc1的数据格式
+     *
+     * @param status
+     * @return
+     */
+    public static int parseToDc1Status(@NotNull String status) {
+        if (status.equals("1011")) {
+            return Integer.parseInt("1101");
+        }
+        if (status.equals("1101")) {
+            return Integer.parseInt("1011");
+        }
+        while (status.endsWith("0")) {
+            status = status.substring(0, status.length() - 1);
+        }
+        if (status.equals("")) {
+            return Integer.parseInt("0");
+        }
+        return Integer.parseInt(status);
+    }
+
+    /**
+     * 转换成手机端数据，标准数据
+     *
+     * @param sta
+     * @return
+     */
+    public static String parseToPhoneStatus(int sta) {
+        String status = String.valueOf(sta);
+        if (status.equals("1011")) {
+            return "1101";
+        }
+        if (status.equals("1101")) {
+            return "1011";
+        }
+        while (status.length() < 4) {
+            status = status + "0";
+        }
+        return status;
     }
 }

@@ -6,16 +6,16 @@ package bean;
 public class SwitchSetBean {
 
     /**
-     * status : 1011
+     * "status" : 1011
      */
-    private String status;
+    private int status;
 
     public String getStatus() {
-        return status;
+        return StatusBean.parseToPhoneStatus(status);
     }
 
     public SwitchSetBean setStatus(String status) {
-        this.status = status;
+        this.status = StatusBean.parseToDc1Status(status);
         return this;
     }
 }

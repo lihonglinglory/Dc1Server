@@ -2,6 +2,7 @@ package server;
 
 import bean.*;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.netty.channel.Channel;
 import model.DataPool;
@@ -40,7 +41,7 @@ public class Connection {
      * dc1的mac，唯一标识
      */
     private String mac;
-    private Gson gson = new Gson();
+    private Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     /**
      * 查询状态正则
      */
@@ -146,7 +147,6 @@ public class Connection {
     }
 
     public void setStatus(String status) {
-        status = checkStatus(status);
         AskBean<SwitchSetBean> askBean = new AskBean<>();
         String uuid = String.format("T%d", System.currentTimeMillis());
         askBean.setAction(SET_DATAPOINT)
@@ -158,27 +158,12 @@ public class Connection {
         appendMsgToQueue(msg);
     }
 
-    private static String checkStatus(String status) {
-        if (status == null) {
-            return "";
-        }
-        if (status.equals("1011")) {
-            return "1101";
-        }
-        if (status.equals("1101")) {
-            return "1011";
-        }
-        while (status.endsWith("0")) {
-            status = status.substring(0, status.length() - 1);
-        }
-        if (status.equals("")) {
-            return "0";
-        }
-        return status;
-    }
-
     @Override
     public String toString() {
         return this.hashCode() + channel.toString();
+    }
+
+    public String getMac() {
+        return mac;
     }
 }
