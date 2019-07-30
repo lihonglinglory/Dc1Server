@@ -12,12 +12,10 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
 
 public class NettySocketServer {
-    private final ChannelHandler handler;
     private int port;
 
-    public NettySocketServer(int port, ChannelHandler handler) {
+    public NettySocketServer(int port) {
         this.port = port;
-        this.handler = handler;
     }
 
     public void start() {
@@ -49,7 +47,7 @@ public class NettySocketServer {
         }
     }
 
-    private class SocketChannelChannelInitializer extends ChannelInitializer<SocketChannel> {
+    private static class SocketChannelChannelInitializer extends ChannelInitializer<SocketChannel> {
 
         // 绑定客户端时触发的操作
         @Override
@@ -59,7 +57,38 @@ public class NettySocketServer {
             pipeline.addLast(new StringEncoder(CharsetUtil.UTF_8));
             pipeline.addLast(new LineBasedFrameDecoder(1024 * 1024));
             pipeline.addLast(new IdleStateHandler(15, 15, 15));
-            pipeline.addLast("handler", handler);//服务器处理客户端请求
+            pipeline.addLast("handler", new ServerHandler());//服务器处理客户端请求
+        }
+    }
+
+    public static class ServerHandler extends ChannelInboundHandlerAdapter {
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            System.out.println("One channel is ACTIVE." + ctx.channel());
+            ConnectionManager.getInstance().addChannel(ctx.channel());
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            System.out.println("One channel is INACTIVE" + ctx.channel());
+            ConnectionManager.getInstance().removeChannel(ctx.channel());
+        }
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            System.out.println("receive message:" + msg);
+            System.out.println("Thread.currentThread().getId()=" + Thread.currentThread().getId());
+            ConnectionManager.getInstance().dispatchMsg(ctx.channel(), (String) msg);
+        }
+
+        @Override
+        public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+            super.channelReadComplete(ctx);
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            super.exceptionCaught(ctx, cause);
         }
     }
 }

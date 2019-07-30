@@ -18,7 +18,7 @@ public class ConnectionManager {
     }
 
     private HashMap<String, Connection> mRemoteAddressConnectionMap = new HashMap<>();
-    private HashMap<String, Connection> mMacConnectionMap = new HashMap<>();
+
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     public void dispatchMsg(Channel channel, String msg) {
