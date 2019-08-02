@@ -8,10 +8,7 @@ import io.netty.channel.Channel;
 import model.DataPool;
 
 import java.lang.reflect.Type;
-import java.util.UnknownFormatConversionException;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -23,6 +20,7 @@ public class Connection {
      * 设备上线
      */
     public static final String ACTIVATE = "activate=";
+    public static final String IDENTIFY = "identify";
     /**
      * 查询设备状态
      */
@@ -40,7 +38,7 @@ public class Connection {
     /**
      * dc1的mac，唯一标识
      */
-    private String mac;
+    private String id;
     private Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     /**
      * 查询状态正则
@@ -76,11 +74,24 @@ public class Connection {
                 Type type = new TypeToken<AskBean<ActivateBean>>() {
                 }.getType();
                 AskBean<ActivateBean> askBean = gson.fromJson(msg, type);
-                mac = askBean.getParams().getMac();
+                id = askBean.getParams().getMac();
+                sendMessageScheduleThread.scheduleWithFixedDelay(new QueryTask(), 0, 1, TimeUnit.MINUTES);
+            } else if (msg.contains(IDENTIFY)) {
+                //收到dc1上线数据 第二种数据格式
+                Type type = new TypeToken<AskBean<IdentifyBean>>() {
+                }.getType();
+                AskBean<IdentifyBean> askBean = gson.fromJson(msg, type);
+                id = askBean.getParams().getDeviceId();
+                AnswerBean<Object> answerBean = new AnswerBean<>();
+                answerBean.setUuid(askBean.getUuid())
+                        .setResult(new Object())
+                        .setStatus(200)
+                        .setMsg("device identified");
+                appendMsgToQueue(gson.toJson(answerBean));
                 sendMessageScheduleThread.scheduleWithFixedDelay(new QueryTask(), 0, 1, TimeUnit.MINUTES);
             }
         } else {
-            if (mac == null) {
+            if (id == null) {
                 return;
             }
             if (pattern.matcher(msg).matches()) {
@@ -88,14 +99,14 @@ public class Connection {
                 }.getType();
                 AnswerBean<StatusBean> answerBean = gson.fromJson(msg, type);
                 if (answerBean.getStatus() == CODE_SUCCESS) {
-                    DataPool.update(mac, answerBean.getResult());
+                    DataPool.update(id, answerBean.getResult());
                 }
             } else {
                 Type type = new TypeToken<AnswerBean<SwitchSetBean>>() {
                 }.getType();
                 AnswerBean<SwitchSetBean> answerBean = gson.fromJson(msg, type);
                 if (answerBean.getStatus() == CODE_SUCCESS) {
-                    DataPool.update(mac, answerBean.getResult());
+                    DataPool.update(id, answerBean.getResult());
                 }
             }
         }
@@ -124,8 +135,6 @@ public class Connection {
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();
                 }
-            } else {
-                System.out.println("SendTask isActive() = false!!!!");
             }
         }
     }
@@ -163,7 +172,7 @@ public class Connection {
         return this.hashCode() + channel.toString();
     }
 
-    public String getMac() {
-        return mac;
+    public String getId() {
+        return id;
     }
 }

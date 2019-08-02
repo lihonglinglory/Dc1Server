@@ -1,7 +1,12 @@
 package bean;
 
+import java.util.ArrayList;
+
 public class Dc1Bean {
-    public String mac;
+    /**
+     * mac或者uuid
+     */
+    public String id;
     /**
      * 实际状态
      */
@@ -11,12 +16,17 @@ public class Dc1Bean {
     public int P;
     private long updateTime;
 
-    public String getMac() {
-        return mac;
+    /**
+     * 插排名称，1-4开关名称
+     */
+    private ArrayList<String> names;
+
+    public String getId() {
+        return id;
     }
 
-    public Dc1Bean setMac(String mac) {
-        this.mac = mac;
+    public Dc1Bean setId(String mac) {
+        this.id = mac;
         return this;
     }
 
@@ -68,7 +78,7 @@ public class Dc1Bean {
     @Override
     public String toString() {
         return "Dc1Bean{" +
-                "mac='" + mac + '\'' +
+                "id='" + id+ '\'' +
                 ", status='" + status + '\'' +
                 ", I=" + I +
                 ", V=" + V +

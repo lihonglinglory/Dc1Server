@@ -53,24 +53,26 @@ public class PhoneConnection {
     }
 
     public void processMessage(String msg) {
+        msg = msg.replace("\n", "");
         String action = msg.split(" ", 2)[0];
         if (action == null || "".equals(action)) {
             return;
         }
+        System.out.println("phone action = " + action);
         switch (action) {
             //查询
             case "query": {
-                appendMsgToQueue("dc1List " + gson.toJson(DataPool.dc1Map.values()));
+                appendMsgToQueue(gson.toJson(DataPool.dc1Map.values()));
                 break;
             }
             //设置
             case "set": {
-                Pattern pattern = Pattern.compile("^set mac=(?<mac>([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}) status=(?<status>[0|1]{4})$");
+                Pattern pattern = Pattern.compile("^set id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) status=(?<status>[0|1]{4})$");
                 Matcher matcher = pattern.matcher(msg);
                 if (matcher.matches()) {
-                    String mac = matcher.group("mac");
+                    String id = matcher.group("id");
                     String status = matcher.group("status");
-                    ConnectionManager.getInstance().setDc1Status(mac, status);
+                    ConnectionManager.getInstance().setDc1Status(id, status);
                 }
                 break;
             }
@@ -100,8 +102,6 @@ public class PhoneConnection {
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();
                 }
-            } else {
-                System.out.println("SendTask isActive() = false!!!!");
             }
         }
     }

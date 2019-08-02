@@ -18,35 +18,35 @@ public class AnswerBean<T> {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public AnswerBean<T> setUuid(String uuid) {
         this.uuid = uuid;
+        return this;
     }
 
     public int getStatus() {
         return status;
     }
 
-    public void setStatus(int status) {
+    public AnswerBean<T> setStatus(int status) {
         this.status = status;
+        return this;
     }
 
     public T getResult() {
         return result;
     }
 
-    public void setResult(T result) {
+    public AnswerBean<T> setResult(T result) {
         this.result = result;
+        return this;
     }
 
     public String getMsg() {
         return msg;
     }
 
-    public void setMsg(String msg) {
+    public AnswerBean<T> setMsg(String msg) {
         this.msg = msg;
-    }
-
-    public static class ResultBean {
-
+        return this;
     }
 }

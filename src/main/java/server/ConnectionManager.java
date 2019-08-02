@@ -5,11 +5,8 @@ import io.netty.channel.Channel;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class ConnectionManager {
     private static final ConnectionManager instance = new ConnectionManager();
@@ -21,8 +18,8 @@ public class ConnectionManager {
         return instance;
     }
 
-    private ConcurrentHashMap<String, Connection> mRemoteAddressConnectionMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, PhoneConnection> mPhoneConnectionMap = new ConcurrentHashMap<>();
+    private HashMap<String, Connection> mRemoteAddressConnectionMap = new HashMap<>();
+    private HashMap<String, PhoneConnection> mPhoneConnectionMap = new HashMap<>();
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
@@ -53,7 +50,7 @@ public class ConnectionManager {
                 mPhoneConnectionMap.put(ip, connection);
             }
             connection.setChannel(channel);
-            System.out.println("addChannel mPhoneConnectionMap:" + mRemoteAddressConnectionMap);
+            System.out.println("addChannel mPhoneConnectionMap:" + mPhoneConnectionMap);
         } else {
             Connection connection = mRemoteAddressConnectionMap.get(ip);
             if (connection == null) {
@@ -76,7 +73,7 @@ public class ConnectionManager {
                 return;
             }
             mPhoneConnectionMap.remove(ip);
-            System.out.println("removeChannel mRemoteAddressConnectionMap:" + mRemoteAddressConnectionMap);
+            System.out.println("removeChannel mPhoneConnectionMap:" + mPhoneConnectionMap);
         } else {
             if (mRemoteAddressConnectionMap.get(ip).isActive()) {
                 return;
@@ -86,11 +83,13 @@ public class ConnectionManager {
         }
     }
 
-    public void setDc1Status(String mac, String status) {
+    public void setDc1Status(String id, String status) {
         Collection<Connection> values = mRemoteAddressConnectionMap.values();
-        values.stream()
-                .filter(connection -> connection.getMac().equals(mac))
-                .findFirst()
-                .ifPresent(connection -> connection.setStatus(status));
+        for (Connection conn : values) {
+            if (conn.getId().equals(id)) {
+                conn.setStatus(status);
+                return;
+            }
+        }
     }
 }
