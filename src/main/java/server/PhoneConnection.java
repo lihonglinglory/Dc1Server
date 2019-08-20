@@ -3,10 +3,12 @@ package server;
 import bean.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.netty.channel.Channel;
 import model.DataPool;
 import sun.rmi.runtime.Log;
 
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,6 +33,10 @@ public class PhoneConnection {
     // 消息队列
     private final LinkedBlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
     private static ScheduledExecutorService sendMessageScheduleThread;
+
+    private Pattern setPattern = Pattern.compile("^set id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) status=(?<status>[0|1]{4})$");
+    private Pattern changeNamePattern = Pattern.compile("^changeName id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) names=(?<names>.+)$");
+
 
     public PhoneConnection() {
         sendMessageScheduleThread = Executors.newScheduledThreadPool(5);
@@ -67,12 +73,23 @@ public class PhoneConnection {
             }
             //设置
             case "set": {
-                Pattern pattern = Pattern.compile("^set id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) status=(?<status>[0|1]{4})$");
-                Matcher matcher = pattern.matcher(msg);
+                Matcher matcher = setPattern.matcher(msg);
                 if (matcher.matches()) {
                     String id = matcher.group("id");
                     String status = matcher.group("status");
                     ConnectionManager.getInstance().setDc1Status(id, status);
+                }
+                break;
+            }
+            case "changeName":{
+                Matcher matcher = changeNamePattern.matcher(msg);
+                if (matcher.matches()) {
+                    String id = matcher.group("id");
+                    String names = matcher.group("names");
+                    ArrayList<String> nameList = gson.fromJson(names, new TypeToken<ArrayList<String>>() {
+                    }.getType());
+                    DataPool.updateName(id,nameList);
+                    appendMsgToQueue(gson.toJson(DataPool.dc1Map.values()));
                 }
                 break;
             }

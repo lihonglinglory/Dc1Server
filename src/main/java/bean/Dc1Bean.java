@@ -75,6 +75,15 @@ public class Dc1Bean {
         return this;
     }
 
+    public ArrayList<String> getNames() {
+        return names;
+    }
+
+    public Dc1Bean setNames(ArrayList<String> names) {
+        this.names = names;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "Dc1Bean{" +
