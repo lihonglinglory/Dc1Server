@@ -57,6 +57,9 @@ public class StatusBean {
      * @return
      */
     public static int parseToDc1Status(@NotNull String status) {
+        if (status.startsWith("0")) {
+            return 0;
+        }
         if (status.equals("1011")) {
             return Integer.parseInt("1101");
         }

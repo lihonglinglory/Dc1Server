@@ -5,6 +5,7 @@ import io.netty.channel.Channel;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,8 +19,8 @@ public class ConnectionManager {
         return instance;
     }
 
-    private HashMap<String, Connection> mRemoteAddressConnectionMap = new HashMap<>();
-    private HashMap<String, PhoneConnection> mPhoneConnectionMap = new HashMap<>();
+    private ConcurrentHashMap<String, Connection> mRemoteAddressConnectionMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, PhoneConnection> mPhoneConnectionMap = new ConcurrentHashMap<>();
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
@@ -84,12 +85,17 @@ public class ConnectionManager {
     }
 
     public void setDc1Status(String id, String status) {
-        Collection<Connection> values = mRemoteAddressConnectionMap.values();
-        for (Connection conn : values) {
-            if (conn.getId().equals(id)) {
-                conn.setStatus(status);
-                return;
-            }
-        }
+        mRemoteAddressConnectionMap
+                .values()
+                .parallelStream()
+                .filter(connection -> connection.getId().equals(id))
+                .forEach(connection -> connection.setStatus(status));
+    }
+
+    public void refreshPhoneData() {
+        mPhoneConnectionMap
+                .values()
+                .parallelStream()
+                .forEach(phoneConnection -> phoneConnection.processMessage("query"));
     }
 }

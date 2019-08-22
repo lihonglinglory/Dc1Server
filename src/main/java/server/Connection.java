@@ -17,10 +17,17 @@ import java.util.regex.Pattern;
 
 public class Connection {
     /**
-     * 设备上线
+     * 设备上线1
      */
     public static final String ACTIVATE = "activate=";
+    /**
+     * 设备上线2
+     */
     public static final String IDENTIFY = "identify";
+    /**
+     * 每增加50kwh，自动上报
+     */
+    public static final String DETAL_KWH = "kWh";
     /**
      * 查询设备状态
      */
@@ -34,6 +41,7 @@ public class Connection {
 
     //周期消息发送间隔时间（ms）
     private final static int DEFAULT_TIME = 100;
+
     private Channel channel;
     /**
      * dc1的mac，唯一标识
@@ -89,6 +97,14 @@ public class Connection {
                         .setMsg("device identified");
                 appendMsgToQueue(gson.toJson(answerBean));
                 sendMessageScheduleThread.scheduleWithFixedDelay(new QueryTask(), 0, 1, TimeUnit.MINUTES);
+            } else if (msg.contains(DETAL_KWH)) {
+                //收到用电量增加
+                Type type = new TypeToken<AskBean<DetalKwhBean>>() {
+                }.getType();
+                AskBean<DetalKwhBean> askBean = gson.fromJson(msg, type);
+                int detalKWh = askBean.getParams().getDetalKWh();
+                DataPool.update(id, detalKWh);
+                ConnectionManager.getInstance().refreshPhoneData();
             }
         } else {
             if (id == null) {

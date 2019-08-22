@@ -1,20 +1,46 @@
-package bean;
+package model.db;
+
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 
 import java.util.ArrayList;
 
+@DatabaseTable(tableName = "Dc1")
 public class Dc1Bean {
+    public static final String ATTR_ID = "id";
+
     /**
      * mac或者uuid
      */
-    public String id;
+    @DatabaseField(id = true)
+    private String id;
     /**
      * 实际状态
      */
-    public String status;
-    public int I;
-    public int V;
-    public int P;
+    @DatabaseField
+    private String status;
+
+    @DatabaseField
+    private int I;
+
+    @DatabaseField
+    private int V;
+
+    @DatabaseField
+    private int P;
+
+    @DatabaseField
     private long updateTime;
+
+    private boolean online;
+
+    /**
+     * 开始计算用电量的起始时间
+     */
+    @DatabaseField
+    private long powerStartTime;
+    @DatabaseField
+    private long totalPower;
 
     /**
      * 插排名称，1-4开关名称
@@ -84,10 +110,37 @@ public class Dc1Bean {
         return this;
     }
 
+    public boolean isOnline() {
+        return online;
+    }
+
+    public Dc1Bean setOnline(boolean online) {
+        this.online = online;
+        return this;
+    }
+
+    public long getPowerStartTime() {
+        return powerStartTime;
+    }
+
+    public Dc1Bean setPowerStartTime(long powerStartTime) {
+        this.powerStartTime = powerStartTime;
+        return this;
+    }
+
+    public long getTotalPower() {
+        return totalPower;
+    }
+
+    public Dc1Bean setTotalPower(long totalPower) {
+        this.totalPower = totalPower;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "Dc1Bean{" +
-                "id='" + id+ '\'' +
+                "id='" + id + '\'' +
                 ", status='" + status + '\'' +
                 ", I=" + I +
                 ", V=" + V +

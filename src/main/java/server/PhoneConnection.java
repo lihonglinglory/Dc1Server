@@ -36,6 +36,7 @@ public class PhoneConnection {
 
     private Pattern setPattern = Pattern.compile("^set id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) status=(?<status>[0|1]{4})$");
     private Pattern changeNamePattern = Pattern.compile("^changeName id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) names=(?<names>.+)$");
+    private Pattern resetPowerPattern = Pattern.compile("^resetPower id=(?<id>[A-Fa-f0-9:|\\-]{17,18})$");
 
 
     public PhoneConnection() {
@@ -81,14 +82,23 @@ public class PhoneConnection {
                 }
                 break;
             }
-            case "changeName":{
+            case "changeName": {
                 Matcher matcher = changeNamePattern.matcher(msg);
                 if (matcher.matches()) {
                     String id = matcher.group("id");
                     String names = matcher.group("names");
                     ArrayList<String> nameList = gson.fromJson(names, new TypeToken<ArrayList<String>>() {
                     }.getType());
-                    DataPool.updateName(id,nameList);
+                    DataPool.updateName(id, nameList);
+                    appendMsgToQueue(gson.toJson(DataPool.dc1Map.values()));
+                }
+                break;
+            }
+            case "resetPower": {
+                Matcher matcher = resetPowerPattern.matcher(msg);
+                if (matcher.matches()) {
+                    String id = matcher.group("id");
+                    DataPool.resetPower(id);
                     appendMsgToQueue(gson.toJson(DataPool.dc1Map.values()));
                 }
                 break;
