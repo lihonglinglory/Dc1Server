@@ -1,5 +1,6 @@
 package model.db;
 
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -45,7 +46,10 @@ public class Dc1Bean {
     /**
      * 插排名称，1-4开关名称
      */
+    @DatabaseField(dataType = DataType.SERIALIZABLE)
     private ArrayList<String> names;
+
+
 
     public String getId() {
         return id;
@@ -146,6 +150,10 @@ public class Dc1Bean {
                 ", V=" + V +
                 ", P=" + P +
                 ", updateTime=" + updateTime +
+                ", online=" + online +
+                ", powerStartTime=" + powerStartTime +
+                ", totalPower=" + totalPower +
+                ", names=" + names +
                 '}';
     }
 }

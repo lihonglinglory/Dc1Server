@@ -114,4 +114,23 @@ public class DataPool {
             dc1Bean.setPowerStartTime(0);
         }
     }
+
+    /**
+     * 设备上线
+     *
+     * @param id
+     */
+    public static void online(String id) {
+        Dc1Bean dc1Bean = dc1Map.get(id);
+        if (dc1Bean != null) {
+            dc1Bean.setOnline(true);
+        }
+    }
+
+    public static void offline(String id) {
+        Dc1Bean dc1Bean = dc1Map.get(id);
+        if (dc1Bean != null) {
+            dc1Bean.setOnline(false);
+        }
+    }
 }

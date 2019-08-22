@@ -25,12 +25,14 @@ public class ConnectionManager {
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     public void dispatchMsg(Channel channel, String msg) {
+
         InetSocketAddress remoteAddress = (InetSocketAddress) (channel.remoteAddress());
         InetSocketAddress localAddress = (InetSocketAddress) (channel.localAddress());
         String ip = remoteAddress.getAddress().getHostAddress();
+        int remotePort = remoteAddress.getPort();
         int localPort = localAddress.getPort();
         if (localPort == 8800) {
-            executorService.execute(() -> mPhoneConnectionMap.get(ip).processMessage(msg));
+            executorService.execute(() -> mPhoneConnectionMap.get(ip + ":" + remotePort).processMessage(msg));
         } else {
             executorService.execute(() -> mRemoteAddressConnectionMap.get(ip).processMessage(msg));
         }
@@ -40,6 +42,7 @@ public class ConnectionManager {
         InetSocketAddress remoteAddress = (InetSocketAddress) (channel.remoteAddress());
         InetSocketAddress localAddress = (InetSocketAddress) (channel.localAddress());
         String ip = remoteAddress.getAddress().getHostAddress();
+        int remotePort = remoteAddress.getPort();
         int localPort = localAddress.getPort();
         System.out.println("remoteAddress ip:" + ip);
         System.out.println("localAddress port:" + localPort);
@@ -48,7 +51,7 @@ public class ConnectionManager {
             PhoneConnection connection = mPhoneConnectionMap.get(ip);
             if (connection == null) {
                 connection = new PhoneConnection();
-                mPhoneConnectionMap.put(ip, connection);
+                mPhoneConnectionMap.put(ip + ":" + remotePort, connection);
             }
             connection.setChannel(channel);
             System.out.println("addChannel mPhoneConnectionMap:" + mPhoneConnectionMap);
@@ -66,14 +69,15 @@ public class ConnectionManager {
     public void removeChannel(Channel channel) {
         InetSocketAddress remoteAddress = (InetSocketAddress) (channel.remoteAddress());
         InetSocketAddress localAddress = (InetSocketAddress) (channel.localAddress());
+        int remotePort = remoteAddress.getPort();
         String ip = remoteAddress.getAddress().getHostAddress();
         int localPort = localAddress.getPort();
         if (localPort == 8800) {
             //手机连接
-            if (mPhoneConnectionMap.get(ip).isActive()) {
+            if (mPhoneConnectionMap.get(ip + ":" + remotePort).isActive()) {
                 return;
             }
-            mPhoneConnectionMap.remove(ip);
+            mPhoneConnectionMap.remove(ip + ":" + remotePort);
             System.out.println("removeChannel mPhoneConnectionMap:" + mPhoneConnectionMap);
         } else {
             if (mRemoteAddressConnectionMap.get(ip).isActive()) {

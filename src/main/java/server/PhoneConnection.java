@@ -90,7 +90,7 @@ public class PhoneConnection {
                     ArrayList<String> nameList = gson.fromJson(names, new TypeToken<ArrayList<String>>() {
                     }.getType());
                     DataPool.updateName(id, nameList);
-                    appendMsgToQueue(gson.toJson(DataPool.dc1Map.values()));
+                    ConnectionManager.getInstance().refreshPhoneData();
                 }
                 break;
             }
@@ -99,7 +99,7 @@ public class PhoneConnection {
                 if (matcher.matches()) {
                     String id = matcher.group("id");
                     DataPool.resetPower(id);
-                    appendMsgToQueue(gson.toJson(DataPool.dc1Map.values()));
+                    ConnectionManager.getInstance().refreshPhoneData();
                 }
                 break;
             }

@@ -27,7 +27,7 @@ public class Connection {
     /**
      * 每增加50kwh，自动上报
      */
-    public static final String DETAL_KWH = "kWh";
+    public static final String DETAL_KWH = "kWh+";
     /**
      * 查询设备状态
      */
@@ -48,6 +48,10 @@ public class Connection {
      */
     private String id;
     private Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+    /**
+     * 临时状态，用于判断设备掉线
+     */
+    private boolean online = false;
     /**
      * 查询状态正则
      */
@@ -76,6 +80,7 @@ public class Connection {
     }
 
     public void processMessage(String msg) {
+        online = true;
         if (msg.contains("action")) {
             if (msg.contains(ACTIVATE)) {
                 //收到dc1上线数据
@@ -83,6 +88,7 @@ public class Connection {
                 }.getType();
                 AskBean<ActivateBean> askBean = gson.fromJson(msg, type);
                 id = askBean.getParams().getMac();
+                DataPool.online(id);
                 sendMessageScheduleThread.scheduleWithFixedDelay(new QueryTask(), 0, 1, TimeUnit.MINUTES);
             } else if (msg.contains(IDENTIFY)) {
                 //收到dc1上线数据 第二种数据格式
@@ -90,6 +96,7 @@ public class Connection {
                 }.getType();
                 AskBean<IdentifyBean> askBean = gson.fromJson(msg, type);
                 id = askBean.getParams().getDeviceId();
+                DataPool.online(id);
                 AnswerBean<Object> answerBean = new AnswerBean<>();
                 answerBean.setUuid(askBean.getUuid())
                         .setResult(new Object())
@@ -126,6 +133,7 @@ public class Connection {
                 }
             }
         }
+        ConnectionManager.getInstance().refreshPhoneData();
     }
 
     public void close() {
@@ -159,6 +167,10 @@ public class Connection {
     private class QueryTask implements Runnable {
         @Override
         public void run() {
+            if (!online) {
+                DataPool.offline(id);
+            }
+            online = false;
             AskBean<String> askBean = new AskBean<>();
             String uuid = String.format("T%d", System.currentTimeMillis());
             askBean.setAction(DATAPOINT)
