@@ -3,8 +3,6 @@ package server;
 import io.netty.channel.Channel;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,14 +10,11 @@ import java.util.concurrent.Executors;
 public class ConnectionManager {
     private static final ConnectionManager instance = new ConnectionManager();
 
-    private ConnectionManager() {
-    }
-
     public static ConnectionManager getInstance() {
         return instance;
     }
 
-    private ConcurrentHashMap<String, Connection> mRemoteAddressConnectionMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, DeviceConnection> mRemoteAddressConnectionMap = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, PhoneConnection> mPhoneConnectionMap = new ConcurrentHashMap<>();
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
@@ -44,8 +39,6 @@ public class ConnectionManager {
         String ip = remoteAddress.getAddress().getHostAddress();
         int remotePort = remoteAddress.getPort();
         int localPort = localAddress.getPort();
-        System.out.println("remoteAddress ip:" + ip);
-        System.out.println("localAddress port:" + localPort);
         if (localPort == 8800) {
             //手机连接
             PhoneConnection connection = mPhoneConnectionMap.get(ip);
@@ -54,15 +47,13 @@ public class ConnectionManager {
                 mPhoneConnectionMap.put(ip + ":" + remotePort, connection);
             }
             connection.setChannel(channel);
-            System.out.println("addChannel mPhoneConnectionMap:" + mPhoneConnectionMap);
         } else {
-            Connection connection = mRemoteAddressConnectionMap.get(ip);
+            DeviceConnection connection = mRemoteAddressConnectionMap.get(ip);
             if (connection == null) {
-                connection = new Connection();
+                connection = new DeviceConnection();
                 mRemoteAddressConnectionMap.put(ip, connection);
             }
             connection.setChannel(channel);
-            System.out.println("addChannel mRemoteAddressConnectionMap:" + mRemoteAddressConnectionMap);
         }
     }
 
@@ -78,13 +69,11 @@ public class ConnectionManager {
                 return;
             }
             mPhoneConnectionMap.remove(ip + ":" + remotePort);
-            System.out.println("removeChannel mPhoneConnectionMap:" + mPhoneConnectionMap);
         } else {
             if (mRemoteAddressConnectionMap.get(ip).isActive()) {
                 return;
             }
             mRemoteAddressConnectionMap.remove(ip);
-            System.out.println("removeChannel mRemoteAddressConnectionMap:" + mRemoteAddressConnectionMap);
         }
     }
 
@@ -100,6 +89,6 @@ public class ConnectionManager {
         mPhoneConnectionMap
                 .values()
                 .parallelStream()
-                .forEach(phoneConnection -> phoneConnection.processMessage("query"));
+                .forEach(phoneConnection -> phoneConnection.processMessage("queryDevice"));
     }
 }

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  * channel的管理
  */
 
-public class Connection {
+public class DeviceConnection {
     /**
      * 设备上线1
      */
@@ -60,7 +60,7 @@ public class Connection {
     private final LinkedBlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
     private static ScheduledExecutorService sendMessageScheduleThread;
 
-    public Connection() {
+    public DeviceConnection() {
         sendMessageScheduleThread = Executors.newScheduledThreadPool(5);
         sendMessageScheduleThread.scheduleWithFixedDelay(new SendTask(), 0, DEFAULT_TIME, TimeUnit.MILLISECONDS);
     }
@@ -80,6 +80,7 @@ public class Connection {
     }
 
     public void processMessage(String msg) {
+        System.out.println("---device action:id=" + id + " message=" + msg);
         online = true;
         if (msg.contains("action")) {
             if (msg.contains(ACTIVATE)) {
@@ -154,7 +155,7 @@ public class Connection {
                 try {
                     //阻塞线程
                     String message = messageQueue.take();
-                    System.out.println("send:" + message + "\n");
+                    System.out.println("---device send to device:id=" + id + " message=" + message + "\n");
                     channel.writeAndFlush(message + "\n");
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();
@@ -178,7 +179,6 @@ public class Connection {
                     .setParams("")
                     .setUuid(uuid);
             String msg = gson.toJson(askBean);
-            System.out.println("QueryTask appendMsgToQueue");
             appendMsgToQueue(msg);
         }
     }
@@ -191,7 +191,6 @@ public class Connection {
                 .setParams(new SwitchSetBean().setStatus(status))
                 .setUuid(uuid);
         String msg = gson.toJson(askBean);
-        System.out.println("Switch set：" + status);
         appendMsgToQueue(msg);
     }
 

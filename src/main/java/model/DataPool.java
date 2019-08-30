@@ -50,7 +50,6 @@ public class DataPool {
                 .setV(statusBean.getV())
                 .setP(statusBean.getP())
                 .setUpdateTime(System.currentTimeMillis());
-        System.out.println(dc1Bean.toString());
     }
 
     /**
@@ -68,7 +67,6 @@ public class DataPool {
         }
         dc1Bean.setStatus(switchSetBean.getStatus())
                 .setUpdateTime(System.currentTimeMillis());
-        System.out.println(dc1Bean.toString());
     }
 
     /**

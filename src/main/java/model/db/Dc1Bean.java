@@ -13,7 +13,7 @@ public class Dc1Bean {
     /**
      * mac或者uuid
      */
-    @DatabaseField(id = true)
+    @DatabaseField(id = true, canBeNull = false, unique = true)
     private String id;
     /**
      * 实际状态
