@@ -1,10 +1,13 @@
 package server;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
@@ -60,7 +63,7 @@ public class NettySocketServer {
             ChannelPipeline pipeline = socketChannel.pipeline();
             pipeline.addLast(new StringDecoder(CharsetUtil.UTF_8));
             pipeline.addLast(new StringEncoder(CharsetUtil.UTF_8));
-            pipeline.addLast(new LineBasedFrameDecoder(1024 * 1024));
+            pipeline.addLast(new DelimiterBasedFrameDecoder(1024*1024*1024, Unpooled.copiedBuffer("$_$".getBytes())));
             pipeline.addLast(new IdleStateHandler(15, 15, 15));
             pipeline.addLast("handler", new ServerHandler());//服务器处理客户端请求
         }

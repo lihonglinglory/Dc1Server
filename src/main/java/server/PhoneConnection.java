@@ -61,7 +61,7 @@ public class PhoneConnection {
     }
 
     public void processMessage(String msg) {
-        msg = msg.replace("\n", "");
+        msg = msg.replace("$_$", "");
         String action = msg.split(" ", 2)[0];
         if (action == null || "".equals(action)) {
             return;
@@ -74,8 +74,9 @@ public class PhoneConnection {
                 break;
             }
             case "queryPlan": {
+                String deviceId = msg.split(" ", 2)[1];
                 sendMessageScheduleThread.execute(() -> {
-                    appendMsgToQueue("queryPlan " + gson.toJson(PlanDao.getInstance().queryAll()));
+                    appendMsgToQueue("queryPlan " + gson.toJson(PlanDao.getInstance().queryAllByDeviceId(deviceId)));
                 });
                 break;
             }
@@ -151,7 +152,7 @@ public class PhoneConnection {
                     //阻塞线程
                     String message = messageQueue.take();
                     System.out.println("------phone send to phone id=" + channel.id() + " message=" + message);
-                    channel.writeAndFlush(message + "\n");
+                    channel.writeAndFlush(message + "$_$");
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();
                 }

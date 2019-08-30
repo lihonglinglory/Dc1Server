@@ -5,6 +5,7 @@ import com.j256.ormlite.field.DatabaseField;
 public class PlanBean {
     public static final String ATTR_EXPIRE = "expire";
     public static final String ATTR_TRIGGER_TIME = "triggerTime";
+    public static final String ATTR_DEVICE_ID = "deviceId";
     /**
      * uuid
      */
@@ -14,7 +15,7 @@ public class PlanBean {
     /**
      * 触发的设备Id
      */
-    @DatabaseField()
+    @DatabaseField(canBeNull = false)
     private String deviceId;
 
     /**

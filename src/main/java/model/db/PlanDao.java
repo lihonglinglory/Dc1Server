@@ -81,4 +81,16 @@ public class PlanDao extends BaseDaoImpl<PlanBean, String> {
         }
         return null;
     }
+
+    public Object queryAllByDeviceId(String deviceId) {
+        try {
+            return queryBuilder()
+                    .orderBy(PlanBean.ATTR_TRIGGER_TIME, true)
+                    .where().eq(PlanBean.ATTR_DEVICE_ID, deviceId)
+                    .query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
