@@ -63,7 +63,7 @@ public class NettySocketServer {
             ChannelPipeline pipeline = socketChannel.pipeline();
             pipeline.addLast(new StringDecoder(CharsetUtil.UTF_8));
             pipeline.addLast(new StringEncoder(CharsetUtil.UTF_8));
-            pipeline.addLast(new DelimiterBasedFrameDecoder(1024*1024*1024, Unpooled.copiedBuffer("$_$".getBytes())));
+            pipeline.addLast(new LineBasedFrameDecoder(1024 * 1024 * 1024, true, false));
             pipeline.addLast(new IdleStateHandler(15, 15, 15));
             pipeline.addLast("handler", new ServerHandler());//服务器处理客户端请求
         }

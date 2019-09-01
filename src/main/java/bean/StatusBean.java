@@ -1,7 +1,5 @@
 package bean;
 
-import com.sun.istack.internal.NotNull;
-
 /**
  * 状态查询
  */
@@ -56,7 +54,7 @@ public class StatusBean {
      * @param status
      * @return
      */
-    public static int parseToDc1Status(@NotNull String status) {
+    public static int parseToDc1Status(String status) {
         if (status.startsWith("0")) {
             return 0;
         }
@@ -89,9 +87,10 @@ public class StatusBean {
         if (status.equals("1101")) {
             return "1011";
         }
-        while (status.length() < 4) {
-            status = status + "0";
+        StringBuilder sb = new StringBuilder(String.valueOf(sta));
+        while (sb.length() < 4) {
+            sb.append("0");
         }
-        return status;
+        return sb.toString();
     }
 }

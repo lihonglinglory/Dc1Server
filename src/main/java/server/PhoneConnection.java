@@ -24,8 +24,6 @@ import java.util.regex.Pattern;
 
 public class PhoneConnection {
 
-    public static final int CODE_SUCCESS = 200;
-
     //周期消息发送间隔时间（ms）
     private final static int DEFAULT_TIME = 100;
     private Channel channel;
@@ -61,12 +59,12 @@ public class PhoneConnection {
     }
 
     public void processMessage(String msg) {
-        msg = msg.replace("$_$", "");
+        msg = msg.replace("\n", "");
         String action = msg.split(" ", 2)[0];
         if (action == null || "".equals(action)) {
             return;
         }
-        System.out.println("------phone action id=" + channel.id() + " message=" + action);
+        System.out.println("------phone action id=" + channel.id() + " message=" + msg);
         switch (action) {
             //查询
             case "queryDevice": {
@@ -152,7 +150,7 @@ public class PhoneConnection {
                     //阻塞线程
                     String message = messageQueue.take();
                     System.out.println("------phone send to phone id=" + channel.id() + " message=" + message);
-                    channel.writeAndFlush(message + "$_$");
+                    channel.writeAndFlush(message + "\n");
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();
                 }
