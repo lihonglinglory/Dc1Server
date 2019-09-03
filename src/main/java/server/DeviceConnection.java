@@ -56,6 +56,11 @@ public class DeviceConnection {
      * 查询状态正则
      */
     private Pattern pattern = Pattern.compile("\\{\"uuid\":\"\\w{0,14}\",\"status\":\\d{1,3},\"result\":\\{\"status\":[0|1]{1,4},\"I\":\\d{1,3},\"V\":\\d{1,3},\"P\":\\d{1,4}},\"msg\":\".+\"}[\r|\n]{0,2}");
+    //TODO 查询逻辑合并
+    /**
+     * 设置开关回复，
+     */
+    private Pattern statusPattern = Pattern.compile("\\{\"uuid\":\"\\w{0,14}\",\"status\":\\d{1,3},\"result\":\\{\"status\":[0|1]{1,4}},\"msg\":\".+\"}[\r|\n]{0,2}");
     // 消息队列
     private final LinkedBlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
     private static ScheduledExecutorService sendMessageScheduleThread;
@@ -112,7 +117,11 @@ public class DeviceConnection {
                 AskBean<DetalKwhBean> askBean = gson.fromJson(msg, type);
                 int detalKWh = askBean.getParams().getDetalKWh();
                 DataPool.update(id, detalKWh);
-                ConnectionManager.getInstance().refreshPhoneData();
+                ConnectionManager.getInstance().refreshPhoneDeviceData();
+            } else {
+                System.out.println("【【收到未识别的新消息】】");
+                System.out.println("【【收到未识别的新消息】】：" + msg);
+                System.out.println("【【收到未识别的新消息】】");
             }
         } else {
             if (id == null) {
@@ -125,16 +134,20 @@ public class DeviceConnection {
                 if (answerBean.getStatus() == CODE_SUCCESS) {
                     DataPool.update(id, answerBean.getResult());
                 }
-            } else {
+            } else if (statusPattern.matcher(msg).matches()) {
                 Type type = new TypeToken<AnswerBean<SwitchSetBean>>() {
                 }.getType();
                 AnswerBean<SwitchSetBean> answerBean = gson.fromJson(msg, type);
                 if (answerBean.getStatus() == CODE_SUCCESS) {
                     DataPool.update(id, answerBean.getResult());
                 }
+            } else {
+                System.out.println("【【收到未识别的新消息】】");
+                System.out.println("【【收到未识别的新消息】】：" + msg);
+                System.out.println("【【收到未识别的新消息】】");
             }
         }
-        ConnectionManager.getInstance().refreshPhoneData();
+        ConnectionManager.getInstance().refreshPhoneDeviceData();
     }
 
     public void close() {

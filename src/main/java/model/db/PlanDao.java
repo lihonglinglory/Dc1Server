@@ -82,7 +82,7 @@ public class PlanDao extends BaseDaoImpl<PlanBean, String> {
         return null;
     }
 
-    public Object queryAllByDeviceId(String deviceId) {
+    public List<PlanBean> queryAllByDeviceId(String deviceId) {
         try {
             return queryBuilder()
                     .orderBy(PlanBean.ATTR_TRIGGER_TIME, true)
@@ -92,5 +92,14 @@ public class PlanDao extends BaseDaoImpl<PlanBean, String> {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public int updateOne(PlanBean bean){
+        try {
+            return update(bean);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 }

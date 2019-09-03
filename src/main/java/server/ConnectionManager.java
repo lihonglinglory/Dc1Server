@@ -85,10 +85,25 @@ public class ConnectionManager {
                 .forEach(connection -> connection.setStatus(status));
     }
 
-    public void refreshPhoneData() {
+    /**
+     * 推送设备最新数据
+     */
+    public void refreshPhoneDeviceData() {
         mPhoneConnectionMap
                 .values()
                 .parallelStream()
                 .forEach(phoneConnection -> phoneConnection.processMessage("queryDevice"));
+    }
+
+    /**
+     * 推送计划有更改
+     *
+     * @param deviceId
+     */
+    public void pushPlanDataChanged(String deviceId) {
+        mPhoneConnectionMap
+                .values()
+                .parallelStream()
+                .forEach(phoneConnection -> phoneConnection.pushMessage("planChanged " + deviceId));
     }
 }

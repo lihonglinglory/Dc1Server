@@ -2,7 +2,6 @@ package server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import io.netty.channel.Channel;
 import model.DataPool;
@@ -58,6 +57,20 @@ public class PhoneConnection {
         }
     }
 
+    /**
+     * 推送消息
+     *
+     * @param msg
+     */
+    public void pushMessage(String msg) {
+        appendMsgToQueue(msg);
+    }
+
+    /**
+     * 收到手机端消息，处理逻辑
+     *
+     * @param msg
+     */
     public void processMessage(String msg) {
         msg = msg.replace("\n", "");
         String action = msg.split(" ", 2)[0];
@@ -97,7 +110,7 @@ public class PhoneConnection {
                     ArrayList<String> nameList = gson.fromJson(names, new TypeToken<ArrayList<String>>() {
                     }.getType());
                     DataPool.updateName(id, nameList);
-                    ConnectionManager.getInstance().refreshPhoneData();
+                    ConnectionManager.getInstance().refreshPhoneDeviceData();
                 }
                 break;
             }
@@ -107,7 +120,7 @@ public class PhoneConnection {
                 if (matcher.matches()) {
                     String id = matcher.group("id");
                     DataPool.resetPower(id);
-                    ConnectionManager.getInstance().refreshPhoneData();
+                    ConnectionManager.getInstance().refreshPhoneDeviceData();
                 }
                 break;
             }

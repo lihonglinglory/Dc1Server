@@ -6,6 +6,9 @@ public class PlanBean {
     public static final String ATTR_EXPIRE = "expire";
     public static final String ATTR_TRIGGER_TIME = "triggerTime";
     public static final String ATTR_DEVICE_ID = "deviceId";
+
+    public static final String REPEAT_ONCE = "repeat_once";
+    public static final String REPEAT_EVERYDAY = "repeat_everyday";
     /**
      * uuid
      */
