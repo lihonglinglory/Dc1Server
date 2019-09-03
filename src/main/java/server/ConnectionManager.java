@@ -98,12 +98,12 @@ public class ConnectionManager {
     /**
      * 推送计划有更改
      *
-     * @param deviceId
+     * @param planId
      */
-    public void pushPlanDataChanged(String deviceId) {
+    public void pushPlanDataChanged(String planId) {
         mPhoneConnectionMap
                 .values()
                 .parallelStream()
-                .forEach(phoneConnection -> phoneConnection.pushMessage("planChanged " + deviceId));
+                .forEach(phoneConnection -> phoneConnection.pushMessage("planChanged " + planId));
     }
 }

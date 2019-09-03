@@ -63,7 +63,7 @@ public class PlanPool {
             if (PlanBean.REPEAT_ONCE.equals(bean.getRepeat())) {
                 bean.setEnable(false);
                 PlanDao.getInstance().updateOne(bean);
-                ConnectionManager.getInstance().pushPlanDataChanged(bean.getDeviceId());
+                ConnectionManager.getInstance().pushPlanDataChanged(bean.getId());
             }
             //执行完成后添加下一次触发的任务
             convert(bean);
