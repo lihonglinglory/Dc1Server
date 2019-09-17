@@ -7,6 +7,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
@@ -14,32 +15,31 @@ import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
 
-public class NettySocketServer {
-    private int port;
+import java.net.InetSocketAddress;
 
-    public NettySocketServer(int port) {
-        this.port = port;
-    }
+public class NettySocketServer {
+    private static final int PORT_DEVICE=8000;
+    private static final int PORT_PHONE=8800;
 
     public void start() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         ServerBootstrap bootstrap = new ServerBootstrap();
         try {
-            bootstrap
-                    .option(ChannelOption.SO_BACKLOG, 1024)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true)
-                    // BACKLOG用于构造服务端套接字ServerSocket对象，标识当服务器请求处理线程全满时，
-                    // 用于临时存放已完成三次握手的请求的队列的最大长度。如果未设置或所设置的值小于1，Java将使用默认值50。
-                    .group(bossGroup, workerGroup) //绑定线程池
+            bootstrap.group(bossGroup, workerGroup) //绑定线程池
                     .channel(NioServerSocketChannel.class)// 指定使用的channel
-                    .childHandler(new SocketChannelChannelInitializer());
-            ChannelFuture channelFutureDc1 = bootstrap.bind(port);
-            ChannelFuture channelFuturePhone = bootstrap.bind(8800);
+                    .childHandler(new SocketChannelChannelInitializer())
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .option(ChannelOption.SO_SNDBUF, 32*1024)
+                    .option(ChannelOption.SO_RCVBUF, 32*1024)
+                    .childOption(ChannelOption.SO_KEEPALIVE, true);
+
+            ChannelFuture channelFutureDc1 = bootstrap.bind(PORT_DEVICE);
+            ChannelFuture channelFuturePhone = bootstrap.bind(PORT_PHONE);
             channelFutureDc1.sync();//服务器异步创建绑定
             channelFuturePhone.sync();
-            System.out.println("Server is listening：" + channelFutureDc1.channel());
-            System.out.println("Server is listening：" + channelFuturePhone.channel());
+            System.out.println("Server is listening：" + ((InetSocketAddress)channelFutureDc1.channel().localAddress()).getPort());
+            System.out.println("Server is listening：" + ((InetSocketAddress)channelFuturePhone.channel().localAddress()).getPort());
             channelFutureDc1.channel().closeFuture().sync();//关闭服务器
             channelFuturePhone.channel().closeFuture().sync();//关闭服务器
         } catch (Exception e) {
@@ -63,7 +63,8 @@ public class NettySocketServer {
             ChannelPipeline pipeline = socketChannel.pipeline();
             pipeline.addLast(new StringDecoder(CharsetUtil.UTF_8));
             pipeline.addLast(new StringEncoder(CharsetUtil.UTF_8));
-            pipeline.addLast(new LineBasedFrameDecoder(1024 * 1024 * 1024, true, false));
+            pipeline.addLast(new DelimiterBasedFrameDecoder(1024 * 1024, Delimiters.lineDelimiter()));
+//            pipeline.addLast(new LineBasedFrameDecoder(1024 * 1024 * 1024, true, false));
             pipeline.addLast(new IdleStateHandler(15, 15, 15));
             pipeline.addLast("handler", new ServerHandler());//服务器处理客户端请求
         }
@@ -87,11 +88,13 @@ public class NettySocketServer {
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+            ctx.flush();
             super.channelReadComplete(ctx);
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            ctx.close();
             super.exceptionCaught(ctx, cause);
         }
     }

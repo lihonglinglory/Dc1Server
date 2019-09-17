@@ -72,12 +72,12 @@ public class PhoneConnection {
      * @param msg
      */
     public void processMessage(String msg) {
+        System.out.println("------phone action id=" + channel.id() + " message=" + msg);
         msg = msg.replace("\n", "");
         String action = msg.split(" ", 2)[0];
         if (action == null || "".equals(action)) {
             return;
         }
-        System.out.println("------phone action id=" + channel.id() + " message=" + msg);
         switch (action) {
             //查询
             case "queryDevice": {

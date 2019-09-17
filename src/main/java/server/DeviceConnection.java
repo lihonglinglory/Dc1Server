@@ -55,7 +55,7 @@ public class DeviceConnection {
     /**
      * 查询状态正则
      */
-    private Pattern pattern = Pattern.compile("\\{\"uuid\":\"\\w{0,14}\",\"status\":\\d{1,3},\"result\":\\{\"status\":[0|1]{1,4},\"I\":\\d{1,3},\"V\":\\d{1,3},\"P\":\\d{1,4}},\"msg\":\".+\"}[\r|\n]{0,2}");
+    private Pattern pattern = Pattern.compile("\\{\"uuid\":\"\\w{0,14}\",\"status\":\\d{1,3},\"result\":\\{\"status\":[0|1]{1,4},\"I\":\\d{1,5},\"V\":\\d{1,3},\"P\":\\d{1,4}},\"msg\":\".+\"}[\r|\n]{0,2}");
     //TODO 查询逻辑合并
     /**
      * 设置开关回复，
@@ -85,8 +85,7 @@ public class DeviceConnection {
     }
 
     public void processMessage(String msg) {
-        System.out.println("---device action:id=" + id + " message=" + msg);
-        online = true;
+        System.out.println("---[device] receive:id=" + id + " message=" + msg);
         if (msg.contains("action")) {
             if (msg.contains(ACTIVATE)) {
                 //收到dc1上线数据
@@ -94,7 +93,6 @@ public class DeviceConnection {
                 }.getType();
                 AskBean<ActivateBean> askBean = gson.fromJson(msg, type);
                 id = askBean.getParams().getMac();
-                DataPool.online(id);
                 sendMessageScheduleThread.scheduleWithFixedDelay(new QueryTask(), 0, 1, TimeUnit.MINUTES);
             } else if (msg.contains(IDENTIFY)) {
                 //收到dc1上线数据 第二种数据格式
@@ -102,7 +100,6 @@ public class DeviceConnection {
                 }.getType();
                 AskBean<IdentifyBean> askBean = gson.fromJson(msg, type);
                 id = askBean.getParams().getDeviceId();
-                DataPool.online(id);
                 AnswerBean<Object> answerBean = new AnswerBean<>();
                 answerBean.setUuid(askBean.getUuid())
                         .setResult(new Object())
@@ -147,6 +144,8 @@ public class DeviceConnection {
                 System.out.println("【【收到未识别的新消息】】");
             }
         }
+        online = true;
+        DataPool.online(id);
         ConnectionManager.getInstance().refreshPhoneDeviceData();
     }
 

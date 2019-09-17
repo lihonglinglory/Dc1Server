@@ -119,6 +119,9 @@ public class DataPool {
      * @param id
      */
     public static void online(String id) {
+        if (id == null) {
+            return;
+        }
         Dc1Bean dc1Bean = dc1Map.get(id);
         if (dc1Bean != null) {
             dc1Bean.setOnline(true);
@@ -126,6 +129,9 @@ public class DataPool {
     }
 
     public static void offline(String id) {
+        if (id == null) {
+            return;
+        }
         Dc1Bean dc1Bean = dc1Map.get(id);
         if (dc1Bean != null) {
             dc1Bean.setOnline(false);
