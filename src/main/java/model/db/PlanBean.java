@@ -9,6 +9,14 @@ public class PlanBean {
 
     public static final String REPEAT_ONCE = "repeat_once";
     public static final String REPEAT_EVERYDAY = "repeat_everyday";
+
+    public static final String DAY_MONDAY = "1";
+    public static final String DAY_TUESDAY = "2";
+    public static final String DAY_WEDNESDAY = "3";
+    public static final String DAY_THURSDAY = "4";
+    public static final String DAY_FRIDAY = "5";
+    public static final String DAY_SATURDAY = "6";
+    public static final String DAY_SUNDAY = "7";
     /**
      * uuid
      */

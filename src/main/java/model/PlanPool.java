@@ -5,11 +5,19 @@ import model.db.PlanDao;
 import server.ConnectionManager;
 
 import java.sql.SQLException;
+import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
+import java.util.function.IntPredicate;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class PlanPool {
 
@@ -47,16 +55,10 @@ public class PlanPool {
         if (!bean.isEnable()) {
             return;
         }
-        LocalTime triggerTime = LocalTime.parse(bean.getTriggerTime());
-        LocalTime now = LocalTime.now();
-        long diff = Duration.between(now, triggerTime).toMillis() / 1000;
-        long diffSecond;
-        if (diff > 1) {
-            diffSecond = diff;
-        } else {
-            diffSecond = ONE_DAY_SECOND + diff;
+        long diffSecond = getDiffSecond(bean);
+        if (!bean.isEnable()) {
+            return;
         }
-
         ScheduledFuture<?> future = mExecutorService.schedule(() -> {
             mTaskMap.remove(bean.getId());
             ConnectionManager.getInstance().setDc1Status(bean.getDeviceId(), bean.getStatus());
@@ -69,6 +71,102 @@ public class PlanPool {
             convert(bean);
         }, diffSecond, TimeUnit.SECONDS);
         mTaskMap.put(bean.getId(), future);
+    }
+
+    /**
+     * @param bean
+     * @return 计算下一次执行时间差，单位：秒
+     */
+    private long getDiffSecond(PlanBean bean) {
+        long diffSecond;
+
+        //当天或者第二天执行
+        LocalTime triggerTime = LocalTime.parse(bean.getTriggerTime());
+        LocalTime now = LocalTime.now();
+        final long diff = Duration.between(now, triggerTime).toMillis() / 1000;
+
+        switch (bean.getRepeat()) {
+            case PlanBean.REPEAT_ONCE:
+            case PlanBean.REPEAT_EVERYDAY: {
+                if (diff > 1) {
+                    diffSecond = diff;
+                } else {
+                    diffSecond = ONE_DAY_SECOND + diff;
+                }
+                log("下次运行时间 :" + diff / 3600f + "小时");
+                return diffSecond;
+            }
+            default: {
+                if (bean.getRepeat() == null || bean.getRepeat().equals("")) {
+                    log("周期设置异常！！");
+                    setPlanDisable(bean);
+                    return 0;
+                }
+                //选星期执行
+                String repeat = bean.getRepeat();
+                int[] array = Arrays.stream(repeat.split(","))
+                        .mapToInt(value -> {
+                            try {
+                                return Integer.parseInt(value);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                return 0;
+                            }
+                        })
+                        .filter(integer -> integer > 0)
+                        .toArray();
+                if (array.length == 0) {
+                    setPlanDisable(bean);
+                    return 0;
+                }
+                if (array.length == 7) {
+                    bean.setRepeat(PlanBean.REPEAT_EVERYDAY);
+                    PlanDao.getInstance().updateOne(bean);
+                    ConnectionManager.getInstance().pushPlanDataChanged(bean.getId());
+                    if (diff > 1) {
+                        diffSecond = diff;
+                    } else {
+                        diffSecond = ONE_DAY_SECOND + diff;
+                    }
+                    return diffSecond;
+                }
+
+                LocalDateTime localDateTime = LocalDateTime.now();
+                int dayOfWeekNow = localDateTime.getDayOfWeek().getValue();
+
+                IntPredicate predicate;
+                if (diff > 1) {
+                    //当天可执行
+                    predicate = i -> i >= dayOfWeekNow;
+                } else {
+                    predicate = i -> i > dayOfWeekNow;
+                }
+                Integer triggerDay = IntStream.of(array)
+                        .filter(predicate)
+                        .findFirst()
+                        .orElseGet(() -> array[0]);
+
+                int i = triggerDay - dayOfWeekNow;
+                if (diff <= 1 && i <= 0) {
+                    i = i + 7;
+                }
+                diffSecond = i * ONE_DAY_SECOND + diff;
+                log("下次运行时间 i:" + i + "天  偏移小时数:" + diff / 3600f);
+                return diffSecond;
+            }
+        }
+    }
+
+    /**
+     * 异常状态纠正
+     *
+     * @param bean
+     */
+    private void setPlanDisable(PlanBean bean) {
+        bean.setEnable(false)
+                .setRepeat(PlanBean.REPEAT_ONCE);
+        PlanDao.getInstance().updateOne(bean);
+        ConnectionManager.getInstance().pushPlanDataChanged(bean.getId());
     }
 
     private boolean canclePlan(String planId) {
@@ -109,4 +207,11 @@ public class PlanPool {
             }
         });
     }
+
+    public static void log(String msg) {
+        System.out.println("########################################################################");
+        System.out.println("###### " + msg);
+        System.out.println("########################################################################");
+    }
+
 }
