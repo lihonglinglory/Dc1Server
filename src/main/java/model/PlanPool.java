@@ -1,23 +1,19 @@
 package model;
 
+import util.LogUtil;
 import model.db.PlanBean;
 import model.db.PlanDao;
 import server.ConnectionManager;
 
 import java.sql.SQLException;
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.IntPredicate;
-import java.util.function.Predicate;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class PlanPool {
 
@@ -93,12 +89,12 @@ public class PlanPool {
                 } else {
                     diffSecond = ONE_DAY_SECOND + diff;
                 }
-                log("下次运行时间 :" + diff / 3600f + "小时");
+                LogUtil.info("下次运行时间 :" + diff / 3600f + "小时");
                 return diffSecond;
             }
             default: {
                 if (bean.getRepeat() == null || bean.getRepeat().equals("")) {
-                    log("周期设置异常！！");
+                    LogUtil.warning("周期设置异常！！");
                     setPlanDisable(bean);
                     return 0;
                 }
@@ -151,7 +147,7 @@ public class PlanPool {
                     i = i + 7;
                 }
                 diffSecond = i * ONE_DAY_SECOND + diff;
-                log("下次运行时间 i:" + i + "天  偏移小时数:" + diff / 3600f);
+                LogUtil.info("下次运行时间 i:" + i + "天  偏移小时数:" + diff / 3600f);
                 return diffSecond;
             }
         }
@@ -207,11 +203,4 @@ public class PlanPool {
             }
         });
     }
-
-    public static void log(String msg) {
-        System.out.println("########################################################################");
-        System.out.println("###### " + msg);
-        System.out.println("########################################################################");
-    }
-
 }

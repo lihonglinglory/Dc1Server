@@ -18,8 +18,8 @@ import io.netty.util.CharsetUtil;
 import java.net.InetSocketAddress;
 
 public class NettySocketServer {
-    private static final int PORT_DEVICE=8000;
-    private static final int PORT_PHONE=8800;
+    private static final int PORT_DEVICE = 8000;
+    private static final int PORT_PHONE = 8800;
 
     public void start() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -30,16 +30,16 @@ public class NettySocketServer {
                     .channel(NioServerSocketChannel.class)// 指定使用的channel
                     .childHandler(new SocketChannelChannelInitializer())
                     .option(ChannelOption.SO_BACKLOG, 1024)
-                    .option(ChannelOption.SO_SNDBUF, 32*1024)
-                    .option(ChannelOption.SO_RCVBUF, 32*1024)
+                    .option(ChannelOption.SO_SNDBUF, 32 * 1024)
+                    .option(ChannelOption.SO_RCVBUF, 32 * 1024)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             ChannelFuture channelFutureDc1 = bootstrap.bind(PORT_DEVICE);
             ChannelFuture channelFuturePhone = bootstrap.bind(PORT_PHONE);
             channelFutureDc1.sync();//服务器异步创建绑定
             channelFuturePhone.sync();
-            System.out.println("Server is listening：" + ((InetSocketAddress)channelFutureDc1.channel().localAddress()).getPort());
-            System.out.println("Server is listening：" + ((InetSocketAddress)channelFuturePhone.channel().localAddress()).getPort());
+            System.out.println("Server is listening：" + ((InetSocketAddress) channelFutureDc1.channel().localAddress()).getPort());
+            System.out.println("Server is listening：" + ((InetSocketAddress) channelFuturePhone.channel().localAddress()).getPort());
             channelFutureDc1.channel().closeFuture().sync();//关闭服务器
             channelFuturePhone.channel().closeFuture().sync();//关闭服务器
         } catch (Exception e) {
@@ -79,10 +79,14 @@ public class NettySocketServer {
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             ConnectionManager.getInstance().removeChannel(ctx.channel());
+            ctx.close();
         }
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            if ("".equals(msg)) {
+                return;
+            }
             ConnectionManager.getInstance().dispatchMsg(ctx.channel(), (String) msg);
         }
 

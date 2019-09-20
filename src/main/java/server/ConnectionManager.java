@@ -9,18 +9,18 @@ import java.util.concurrent.Executors;
 
 public class ConnectionManager {
     private static final ConnectionManager instance = new ConnectionManager();
+    public String token = "";
 
     public static ConnectionManager getInstance() {
         return instance;
     }
 
-    private ConcurrentHashMap<String, DeviceConnection> mRemoteAddressConnectionMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, DeviceConnection> mDeviceConnectionMap = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, PhoneConnection> mPhoneConnectionMap = new ConcurrentHashMap<>();
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     public void dispatchMsg(Channel channel, String msg) {
-
         InetSocketAddress remoteAddress = (InetSocketAddress) (channel.remoteAddress());
         InetSocketAddress localAddress = (InetSocketAddress) (channel.localAddress());
         String ip = remoteAddress.getAddress().getHostAddress();
@@ -29,11 +29,11 @@ public class ConnectionManager {
         if (localPort == 8800) {
             executorService.execute(() -> mPhoneConnectionMap.get(ip + ":" + remotePort).processMessage(msg));
         } else {
-            executorService.execute(() -> mRemoteAddressConnectionMap.get(ip).processMessage(msg));
+            executorService.execute(() -> mDeviceConnectionMap.get(ip).processMessage(msg));
         }
     }
 
-    public void addChannel(Channel channel) {
+    public IConnection addChannel(Channel channel) {
         InetSocketAddress remoteAddress = (InetSocketAddress) (channel.remoteAddress());
         InetSocketAddress localAddress = (InetSocketAddress) (channel.localAddress());
         String ip = remoteAddress.getAddress().getHostAddress();
@@ -47,13 +47,15 @@ public class ConnectionManager {
                 mPhoneConnectionMap.put(ip + ":" + remotePort, connection);
             }
             connection.setChannel(channel);
+            return connection;
         } else {
-            DeviceConnection connection = mRemoteAddressConnectionMap.get(ip);
+            DeviceConnection connection = mDeviceConnectionMap.get(ip);
             if (connection == null) {
                 connection = new DeviceConnection();
-                mRemoteAddressConnectionMap.put(ip, connection);
+                mDeviceConnectionMap.put(ip, connection);
             }
             connection.setChannel(channel);
+            return connection;
         }
     }
 
@@ -70,15 +72,15 @@ public class ConnectionManager {
             }
             mPhoneConnectionMap.remove(ip + ":" + remotePort);
         } else {
-            if (mRemoteAddressConnectionMap.get(ip).isActive()) {
+            if (mDeviceConnectionMap.get(ip).isActive()) {
                 return;
             }
-            mRemoteAddressConnectionMap.remove(ip);
+            mDeviceConnectionMap.remove(ip);
         }
     }
 
     public void setDc1Status(String id, String status) {
-        mRemoteAddressConnectionMap
+        mDeviceConnectionMap
                 .values()
                 .parallelStream()
                 .filter(connection -> connection.getId().equals(id))

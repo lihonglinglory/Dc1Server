@@ -1,5 +1,6 @@
 package server;
 
+import util.LogUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
  * channel的管理
  */
 
-public class PhoneConnection {
+public class PhoneConnection implements IConnection {
 
     //周期消息发送间隔时间（ms）
     private final static int DEFAULT_TIME = 100;
@@ -33,9 +34,9 @@ public class PhoneConnection {
     private final LinkedBlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
     private static ScheduledExecutorService sendMessageScheduleThread;
 
-    private Pattern setPattern = Pattern.compile("^set id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) status=(?<status>[0|1]{4})$");
-    private Pattern changeNamePattern = Pattern.compile("^changeName id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) names=(?<names>.+)$");
-    private Pattern resetPowerPattern = Pattern.compile("^resetPower id=(?<id>[A-Fa-f0-9:|\\-]{17,18})$");
+    private Pattern setPattern = Pattern.compile("^id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) status=(?<status>[0|1]{4})$");
+    private Pattern changeNamePattern = Pattern.compile("^id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) names=(?<names>.+)$");
+    private Pattern resetPowerPattern = Pattern.compile("^id=(?<id>[A-Fa-f0-9:|\\-]{17,18})$");
 
     public PhoneConnection() {
         sendMessageScheduleThread = Executors.newScheduledThreadPool(5);
@@ -72,10 +73,17 @@ public class PhoneConnection {
      * @param msg
      */
     public void processMessage(String msg) {
-        System.out.println("------phone action id=" + channel.id() + " message=" + msg);
+        LogUtil.info("phone|receive id=" + channel.id() + " message=" + msg);
         msg = msg.replace("\n", "");
-        String action = msg.split(" ", 2)[0];
-        if (action == null || "".equals(action)) {
+        final String[] split = msg.split(" ", 3);
+        String action = split[0];
+        if (action == null || "".equals(action) || split.length < 2) {
+            return;
+        }
+        String token = split[1];
+        if ("".equals(token) || !ConnectionManager.getInstance().token.equals(token)) {
+            appendMsgToQueue("tip token验证失败！");
+            LogUtil.warning("tip token验证失败！");
             return;
         }
         switch (action) {
@@ -85,7 +93,7 @@ public class PhoneConnection {
                 break;
             }
             case "queryPlan": {
-                String deviceId = msg.split(" ", 2)[1];
+                String deviceId = split[2];
                 sendMessageScheduleThread.execute(() -> {
                     appendMsgToQueue("queryPlan " + gson.toJson(PlanDao.getInstance().queryAllByDeviceId(deviceId)));
                 });
@@ -93,7 +101,7 @@ public class PhoneConnection {
             }
             //设置
             case "set": {
-                Matcher matcher = setPattern.matcher(msg);
+                Matcher matcher = setPattern.matcher(split[2]);
                 if (matcher.matches()) {
                     String id = matcher.group("id");
                     String status = matcher.group("status");
@@ -103,7 +111,7 @@ public class PhoneConnection {
             }
             //改名字
             case "changeName": {
-                Matcher matcher = changeNamePattern.matcher(msg);
+                Matcher matcher = changeNamePattern.matcher(split[2]);
                 if (matcher.matches()) {
                     String id = matcher.group("id");
                     String names = matcher.group("names");
@@ -116,7 +124,7 @@ public class PhoneConnection {
             }
             //重置电量
             case "resetPower": {
-                Matcher matcher = resetPowerPattern.matcher(msg);
+                Matcher matcher = resetPowerPattern.matcher(split[2]);
                 if (matcher.matches()) {
                     String id = matcher.group("id");
                     DataPool.resetPower(id);
@@ -125,20 +133,21 @@ public class PhoneConnection {
                 break;
             }
             case "addPlan": {
-                String json = msg.split(" ", 2)[1];
+                String json = split[2];
                 PlanBean plan = gson.fromJson(json, PlanBean.class);
                 PlanPool.getInstance().addPlan(plan);
                 break;
             }
             case "deletePlan": {
-                String id = msg.split(" ", 2)[1];
+                String id = split[2];
                 PlanPool.getInstance().deletePlan(id);
                 break;
             }
             case "enablePlanById": {
-                String id = msg.split(" ", 3)[1];
-                boolean enable = Boolean.parseBoolean(msg.split(" ", 3)[2]);
-                PlanPool.getInstance().enablePlan(id, enable);
+                String body = split[2];
+                String[] strs = body.split(" ", 2);
+                boolean enable = Boolean.parseBoolean(strs[1]);
+                PlanPool.getInstance().enablePlan(strs[0], enable);
                 break;
             }
         }
@@ -162,7 +171,7 @@ public class PhoneConnection {
                 try {
                     //阻塞线程
                     String message = messageQueue.take();
-                    System.out.println("------phone send to phone id=" + channel.id() + " message=" + message);
+                    LogUtil.info("phone|send id=" + channel.id() + " message=" + message);
                     channel.writeAndFlush(message + "\n");
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();

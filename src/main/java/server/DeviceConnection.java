@@ -1,5 +1,6 @@
 package server;
 
+import util.LogUtil;
 import bean.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,7 +16,7 @@ import java.util.regex.Pattern;
  * channel的管理
  */
 
-public class DeviceConnection {
+public class DeviceConnection implements IConnection {
     /**
      * 设备上线1
      */
@@ -85,7 +86,7 @@ public class DeviceConnection {
     }
 
     public void processMessage(String msg) {
-        System.out.println("---[device] receive:id=" + id + " message=" + msg);
+        LogUtil.info("device|receive id=" + id + " message=" + msg);
         if (msg.contains("action")) {
             if (msg.contains(ACTIVATE)) {
                 //收到dc1上线数据
@@ -116,9 +117,7 @@ public class DeviceConnection {
                 DataPool.update(id, detalKWh);
                 ConnectionManager.getInstance().refreshPhoneDeviceData();
             } else {
-                System.out.println("【【收到未识别的新消息】】");
-                System.out.println("【【收到未识别的新消息】】：" + msg);
-                System.out.println("【【收到未识别的新消息】】");
+                LogUtil.warning(msg);
             }
         } else {
             if (id == null) {
@@ -139,9 +138,7 @@ public class DeviceConnection {
                     DataPool.update(id, answerBean.getResult());
                 }
             } else {
-                System.out.println("【【收到未识别的新消息】】");
-                System.out.println("【【收到未识别的新消息】】：" + msg);
-                System.out.println("【【收到未识别的新消息】】");
+                LogUtil.warning(msg);
             }
         }
         online = true;
@@ -167,7 +164,7 @@ public class DeviceConnection {
                 try {
                     //阻塞线程
                     String message = messageQueue.take();
-                    System.out.println("---device send to device:id=" + id + " message=" + message + "\n");
+                    LogUtil.info("device|send id=" + id + " message=" + message);
                     channel.writeAndFlush(message + "\n");
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();
