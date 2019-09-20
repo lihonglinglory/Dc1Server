@@ -94,7 +94,7 @@ public class ConnectionManager {
         mPhoneConnectionMap
                 .values()
                 .parallelStream()
-                .forEach(phoneConnection -> phoneConnection.processMessage("queryDevice"));
+                .forEach(phoneConnection -> phoneConnection.processMessage("queryDevice " + token));
     }
 
     /**
