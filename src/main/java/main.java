@@ -4,6 +4,7 @@ import model.db.SqliteOpenHelper;
 import server.ConnectionManager;
 import server.NettySocketServer;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +35,12 @@ public class main {
             return pros;
         } catch (IOException e) {
             System.out.println(propertyFile + " is can not read");
+        }
+        File file=new File("/opt/dc1.conf");
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return null;
     }
